@@ -9,7 +9,7 @@ def fetch_weather_data(latitude, longitude, start_date, end_date, filename):
         "longitude": longitude,
         "start_date": start_date,
         "end_date": end_date,
-        "hourly": "temperature_2m,relative_humidity_2m,precipitation,windspeed_10m,windgusts_10m,pressure_msl",
+        "hourly": "temperature_2m,relative_humidity_2m,precipitation,windspeed_10m,windgusts_10m,pressure_msl,winddirection_10m",
         "timezone": "Asia/Tashkent"
     }
     response = requests.get(base_url, params=params)
@@ -26,8 +26,8 @@ def fetch_weather_data(latitude, longitude, start_date, end_date, filename):
 latitude = 41.2995
 longitude = 69.2401
 
-start_date = "2010-01-01"
-end_date = "2025-11-23"
-filename = "tashkent_weather_15years.csv"
+start_date = "2005-01-01"
+end_date = "2025-12-04"
+filename = "tashkent_weather_20years.csv"
 
 fetch_weather_data(latitude, longitude, start_date, end_date, filename)
