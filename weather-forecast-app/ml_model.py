@@ -8,12 +8,19 @@ import requests
 from sklearn.linear_model import LinearRegression, LogisticRegression
 from sklearn.preprocessing import StandardScaler
 from sklearn.metrics import mean_squared_error, mean_absolute_error, r2_score
+# ml_model.py
 
+# You must add this import if it's not there:
+import streamlit as st 
+# ...
+# Change the API key line to this:
+API_KEY = st.secrets["openweathermap_api_key"]
+# ..
 # ==========================================================================
 # CONFIGURATION (Use secrets management for real deployment!)
-# ==========================================================================
-API_KEY = '0ea12166dca6efaa2a7077602c59e70d'
-BASE_URL = 'https://api.openweathermap.org/data/2.5/'
+# # ==========================================================================
+# API_KEY = '0ea12166dca6efaa2a7077602c59e70d'
+# BASE_URL = 'https://api.openweathermap.org/data/2.5/'
 
 # ==========================================================================
 # HELPER FUNCTIONS (Copy-pasted from your original code)
@@ -254,7 +261,7 @@ def run_ml_pipeline():
         return None
     
     # 2. Load historical data
-    historical_data = read_historical_data('./data/tashkent_weather_20years.csv')
+    historical_data = read_historical_data('../data/tashkent_weather_20years.csv')
     if historical_data.empty:
         return None
     
