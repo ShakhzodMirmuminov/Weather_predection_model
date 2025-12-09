@@ -11,6 +11,7 @@ import plotly.graph_objects as go
 import plotly.express as px
 import pytz
 
+
 # ==========================================================================
 # PAGE CONFIGURATION
 # ==========================================================================
@@ -1044,8 +1045,7 @@ def main():
         
         # Train advanced model once
         model_data = train_model_with_time_series_cv(historical_data)
-        
-    # --- Page Rendering ---
+
     if st.session_state.page == 'home':
         home_page()
     elif st.session_state.page == 'forecast':
