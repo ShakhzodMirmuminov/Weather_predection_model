@@ -44,7 +44,7 @@ python3 data_miner.py
 streamlit run streamlit_app.py
 ```
 ## Output
-[output](./vd/Demo_result.png)
+![output](./vd/Demo_result.png)
 ##  Model Performance
 **Linear Regression Model (Primary)
 Test Set Performance (Last 20% of data):**
