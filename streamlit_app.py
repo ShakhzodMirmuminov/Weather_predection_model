@@ -11,10 +11,6 @@ import plotly.graph_objects as go
 import plotly.express as px
 import pytz
 
-
-# ==========================================================================
-# PAGE CONFIGURATION
-# ==========================================================================
 st.set_page_config(
     page_title="Tashkent Weather Forecast ML",
     page_icon="😶‍🌫️",
@@ -22,29 +18,23 @@ st.set_page_config(
     initial_sidebar_state="collapsed"
 )
 
-# ==========================================================================
-# THEME TOGGLE & STYLING
-# ==========================================================================
-
-# Initialize theme, page, and selected day in session state
 if 'theme' not in st.session_state:
     st.session_state.theme = 'dark'
 if 'page' not in st.session_state:
     st.session_state.page = 'home'
 if 'selected_day' not in st.session_state:
-    st.session_state.selected_day = 0 # Day 0 (Today)
+    st.session_state.selected_day = 0 
 
 def toggle_theme():
     st.session_state.theme = 'light' if st.session_state.theme == 'dark' else 'dark'
 
 def set_page(page_name):
     st.session_state.page = page_name
-    st.session_state.selected_day = 0  # Reset day selection when changing pages
+    st.session_state.selected_day = 0  
 
 def select_day(day_index):
     st.session_state.selected_day = day_index
 
-# Apply theme-specific CSS
 if st.session_state.theme == 'dark':
     st.markdown("""
     <style>
@@ -205,21 +195,17 @@ else:
     """, unsafe_allow_html=True)
 
 
-# ==========================================================================
-# CONFIGURATION
-# ==========================================================================
+
 API_KEY = '0ea12166dca6efaa2a7077602c59e70d'
 BASE_URL = 'https://api.openweathermap.org/data/2.5/'
 TASHKENT_LAT = 41.2995
 TASHKENT_LON = 69.2401
 DATA_PATH = './data/tashkent_weather_23years.csv'
 
-# ==========================================================================
-# UTILITY FUNCTIONS
-# ==========================================================================
+
 
 def wind_direction_to_compass(wind_deg):
-    """Convert wind degree to compass direction"""
+
     wind_deg = wind_deg % 360
     directions = ["N", "NNE", "NE", "ENE", "E", "ESE", "SE", "SSE",
                   "S", "SSW", "SW", "WSW", "W", "WNW", "NW", "NNW"]
@@ -227,7 +213,7 @@ def wind_direction_to_compass(wind_deg):
     return directions[idx]
 
 def get_weather_icon(description):
-    """Simple mapping for icons based on description"""
+
     if 'clear' in description: return '🌞'
     if 'cloud' in description: return '☁️'
     if 'rain' in description or 'drizzle' in description: return '🌧️'
@@ -235,9 +221,7 @@ def get_weather_icon(description):
     if 'thunder' in description: return '⛈️'
     return '🌡️'
 
-# ==========================================================================
-# DATA FETCHING & FEATURE ENGINEERING (FROM main.ipynb)
-# ==========================================================================
+
 @st.cache_data(ttl=600)
 def get_current_weather(lat=TASHKENT_LAT, lon=TASHKENT_LON):
     """Fetch current weather from OpenWeatherMap API"""
@@ -267,10 +251,10 @@ def get_current_weather(lat=TASHKENT_LAT, lon=TASHKENT_LON):
         }
     except Exception as e:
         return None
-
+    
 @st.cache_data
 def read_historical_data(filepath):
-    """Load historical weather data from CSV"""
+
     try:
         df = pd.read_csv(filepath)
         df['time'] = pd.to_datetime(df['time'])
@@ -280,14 +264,13 @@ def read_historical_data(filepath):
         return None
 
 def create_features(df):
-    """Create time-based and lag features for better prediction"""
+
     df = df.copy()
 
     if 'time' in df.columns:
         df['hour'] = df['time'].dt.hour
         df['day_of_year'] = df['time'].dt.dayofyear
-        
-        # Cyclical features
+
         df['hour_sin'] = np.sin(2 * np.pi * df['hour'] / 24)
         df['hour_cos'] = np.cos(2 * np.pi * df['hour'] / 24)
         df['day_sin'] = np.sin(2 * np.pi * df['day_of_year'] / 365)
@@ -296,11 +279,11 @@ def create_features(df):
     if 'temperature_2m' in df.columns:
         for lag in [1, 3, 6, 12, 24]:
             df[f'temp_lag_{lag}h'] = df['temperature_2m'].shift(lag)
-    
+
     if 'relative_humidity_2m' in df.columns:
         for lag in [1, 3, 6]:
             df[f'humidity_lag_{lag}h'] = df['relative_humidity_2m'].shift(lag)
-    
+
     if 'pressure_msl' in df.columns:
         for lag in [1, 6, 12]:
             df[f'pressure_lag_{lag}h'] = df['pressure_msl'].shift(lag)
@@ -313,13 +296,13 @@ def create_features(df):
     return df
 
 def prepare_rain_data(historical_data):
-    """Prepare data for rain prediction"""
+
     historical_data = historical_data.copy()
     historical_data['RainTomorrow'] = (historical_data['precipitation'] > 0).astype(int)
-    
+
     features = ['temperature_2m', 'relative_humidity_2m', 'windspeed_10m', 
                 'windgusts_10m', 'pressure_msl', 'winddirection_10m']
-    
+
     X = historical_data[features].fillna(0)
     Y = historical_data['RainTomorrow']
     
@@ -334,21 +317,19 @@ def train_rain_model(X, Y):
 
 @st.cache_resource
 def train_model_with_time_series_cv(historical_df, n_splits=5):
-    """Train model with Time Series Cross-Validation and return final model/metrics"""
-    
+
     df_with_features = create_features(historical_df)
-    
+
     exclude_cols = ['time', 'temperature_2m', 'precipitation']
     feature_cols = [col for col in df_with_features.columns if col not in exclude_cols]
-    
+
     X = df_with_features[feature_cols].values
     y = df_with_features['temperature_2m'].values
-    
+
     tscv = TimeSeriesSplit(n_splits=n_splits)
-    
+
     cv_scores = { 'test_mae': [] }
-    
-    # Run CV to get robust average metrics
+
     for train_index, test_index in tscv.split(X):
         X_train, X_test = X[train_index], X[test_index]
         y_train, y_test = y[train_index], y[test_index]
@@ -356,35 +337,34 @@ def train_model_with_time_series_cv(historical_df, n_splits=5):
         scaler = StandardScaler()
         X_train_scaled = scaler.fit_transform(X_train)
         X_test_scaled = scaler.transform(X_test)
-        
+
         model = LinearRegression()
         model.fit(X_train_scaled, y_train)
-        
+
         y_test_pred = model.predict(X_test_scaled)
         test_mae = mean_absolute_error(y_test, y_test_pred)
         cv_scores['test_mae'].append(test_mae)
-    
+
     avg_cv_mae = np.mean(cv_scores['test_mae'])
 
-    # Final Train/Test Split (80/20) for ultimate performance report
     split_idx = int(len(df_with_features) * 0.8)
     train_df = df_with_features.iloc[:split_idx].copy()
     test_df = df_with_features.iloc[split_idx:].copy()
-    
+
     X_train = train_df[feature_cols].values
     y_train = train_df['temperature_2m'].values
     X_test = test_df[feature_cols].values
     y_test = test_df['temperature_2m'].values
-    
+
     scaler_final = StandardScaler()
     X_train_scaled = scaler_final.fit_transform(X_train)
     X_test_scaled = scaler_final.transform(X_test)
-    
+
     model_final = LinearRegression()
     model_final.fit(X_train_scaled, y_train)
-    
+
     y_test_pred = model_final.predict(X_test_scaled)
-    
+
     metrics = {
         'rmse': np.sqrt(mean_squared_error(y_test, y_test_pred)),
         'mae': mean_absolute_error(y_test, y_test_pred),
@@ -392,50 +372,47 @@ def train_model_with_time_series_cv(historical_df, n_splits=5):
         'avg_cv_mae': avg_cv_mae,
         'feature_cols': feature_cols
     }
-    
+
     return model_final, scaler_final, metrics, test_df, y_test, y_test_pred
 
 def compare_last_10_days(model, scaler, feature_cols, df_with_features):
-    """Compare predicted vs actual for last 10 days at 4 times daily, returning daily summary."""
+ 
     last_date = df_with_features['time'].max()
     start_date = last_date - timedelta(days=10)
     
     last_10_days = df_with_features[df_with_features['time'] >= start_date].copy()
 
-    target_hours = [0, 6, 12, 18] # Night, Morning, Afternoon, Sunset
-    
+    target_hours = [0, 6, 12, 18]
+
     comparison_data = []
 
     last_10_days['date'] = last_10_days['time'].dt.date
     unique_dates = sorted(last_10_days['date'].unique())[-10:] 
-    
+
     for date in unique_dates:
         day_data = last_10_days[last_10_days['date'] == date]
-        
-        # Calculate daily Actual Min/Max
+
         actual_min_temp = day_data['temperature_2m'].min()
         actual_max_temp = day_data['temperature_2m'].max()
-        
-        # Collect predictions for the day
+
         daily_predictions = []
-        
+
         for hour in target_hours:
             hour_data = day_data[day_data['hour'] == hour]
-            
+
             if len(hour_data) > 0:
                 row = hour_data.iloc[0]
 
                 features = row[feature_cols].values.reshape(1, -1)
                 features_scaled = scaler.transform(features)
                 predicted_temp = model.predict(features_scaled)[0]
-                
+
                 daily_predictions.append(predicted_temp)
-                
-        # Aggregate daily predictions and metrics
+
         if daily_predictions:
             pred_min_temp = min(daily_predictions)
             pred_max_temp = max(daily_predictions)
-            
+
             comparison_data.append({
                 'day_index': (last_date.date() - date).days,
                 'date': date,
@@ -446,36 +423,34 @@ def compare_last_10_days(model, scaler, feature_cols, df_with_features):
                 'predicted_max': round(pred_max_temp, 1),
                 'avg_error': np.mean([abs(p - a) for p, a in zip(daily_predictions, day_data[day_data['hour'].isin(target_hours)]['temperature_2m'].values[:len(daily_predictions)])])
             })
-                
-    # Sort data frame from oldest (Day 10 Ago) to newest (Day 1 Ago)
+
     comparison_df = pd.DataFrame(comparison_data).sort_values('day_index', ascending=False).reset_index(drop=True)
-    comparison_df['day_index'] = comparison_df.index # Reindex 0 to 9 for easier selection
+    comparison_df['day_index'] = comparison_df.index
     return comparison_df
 
 def forecast_next_10_days(model, scaler, feature_cols, df_with_features):
-    """Forecast weather for next 10 days at 4 times daily, returning daily summary."""
-    
+
     recent_data = df_with_features.tail(168).copy()
     target_hours = [0, 6, 12, 18]
-    
+
     forecast_data = []
-    
+
     now = datetime.now()
     today = now.date()
-    
+
     for day_offset in range(10):
         forecast_date = today + timedelta(days=day_offset)
-        
+
         daily_predictions = []
-        
+
         for hour in target_hours:
             target_time = datetime.combine(forecast_date, datetime.min.time()) + timedelta(hours=hour)
 
             if day_offset == 0 and target_time < now:
                 continue
-                
+ 
             similar_data = recent_data[recent_data['hour'] == hour]
-            
+  
             if len(similar_data) > 0:
                 last_similar = similar_data.iloc[-1]
 
@@ -485,14 +460,13 @@ def forecast_next_10_days(model, scaler, feature_cols, df_with_features):
 
                 if day_offset > 2:
                     predicted_temp += np.random.normal(0, 0.2 * day_offset)
-                
+
                 daily_predictions.append(predicted_temp)
-        
-        # Aggregate daily predictions
+
         if daily_predictions:
             temp_min = min(daily_predictions)
             temp_max = max(daily_predictions)
-            
+
             forecast_data.append({
                 'day_index': day_offset,
                 'date': forecast_date,
@@ -501,27 +475,21 @@ def forecast_next_10_days(model, scaler, feature_cols, df_with_features):
                 'temperature_max': round(temp_max, 1),
                 'prediction_times': {f"{h:02d}:00": round(p, 1) for h, p in zip(target_hours, daily_predictions)}
             })
-    
+
     return pd.DataFrame(forecast_data)
 
-# ==========================================================================
-# PAGE DEFINITIONS
-# ==========================================================================
-
 def home_page():
-    """Initial page with map and Tashkent selection."""
-    
+
     st.markdown("<p class='title-gradient'>Tashkent Weather Forecast ML</p>", unsafe_allow_html=True)
     st.markdown("<p class='subtitle'>Select a location to view the forecast powered by 23+ years of historical data.</p>", unsafe_allow_html=True)
-    
-    # 1. Search Bar (Limited to Tashkent for now)
+
     st.markdown("### Search Location")
-    
+
     col_search, col_button = st.columns([3, 1])
-    
+
     with col_search:
         location_input = st.text_input("Enter City Name (Tashkent only for now)", "Tashkent", label_visibility="collapsed")
-    
+
     with col_button:
         if st.button("Open Forecast", use_container_width=True):
              if location_input.lower() == 'tashkent':
@@ -530,8 +498,7 @@ def home_page():
                 st.error("Forecast available only for Tashkent.")
 
     st.markdown("---")
-    
-    # 2. Map View
+
     st.markdown("### Map View (Uzbekistan)")
     
     st.markdown("<div class='map-container'>", unsafe_allow_html=True)
@@ -541,26 +508,22 @@ def home_page():
         'lon': [TASHKENT_LON],
         'city': ['Tashkent']
     })
-    
+
     st.map(map_data, zoom=6, use_container_width=True)
-    
+
     st.markdown("</div>", unsafe_allow_html=True)
 
     st.info("Click 'Open Forecast' above or use the map for visual confirmation of the location.")
 def forecast_page(current_weather, historical_data, model_data):
-    """Main forecast and historical analysis page."""
-    
+
     model, scaler, metrics, test_df, y_test, y_test_pred = model_data
 
-    # Load and process data
     with st.spinner("⏳ Generating forecasts..."):
         df_with_features = create_features(historical_data)
-        
-        # Get 10-day summary data
+
         comparison_summary_df = compare_last_10_days(model, scaler, metrics['feature_cols'], df_with_features)
         forecast_summary_df = forecast_next_10_days(model, scaler, metrics['feature_cols'], df_with_features)
-        
-        # Rain prediction for current day
+
         X_rain, Y_rain = prepare_rain_data(historical_data)
         rain_model = train_rain_model(X_rain, Y_rain)
         current_rain_data = pd.DataFrame([{
@@ -574,10 +537,9 @@ def forecast_page(current_weather, historical_data, model_data):
         rain_prediction = rain_model.predict(current_rain_data)[0]
         wind_dir = wind_direction_to_compass(current_weather['wind_deg'])
 
-    
+
     st.markdown(f"## 📍 {current_weather['city']} Weather Forecast")
-    
-    # --- Current Weather Section ---
+
     st.markdown("### 🌞 Current Conditions")
     st.markdown("<div class='metric-card'>", unsafe_allow_html=True)
     
@@ -594,59 +556,49 @@ def forecast_page(current_weather, historical_data, model_data):
     with col4:
         st.metric("🌀 Pressure", f"{current_weather['pressure']} hPa")
     with col5:
-        # FIXED: Added spaces between NO and ☀️
+
         st.metric("🌧️   Rain   Risk Tomorrow", "YES " if rain_prediction else "NO  🌞", help="Logistic Regression Model Prediction for Rain Tomorrow")
     
     st.markdown("</div>", unsafe_allow_html=True)
     st.markdown("---")
-    
-    # Check if we need to auto-select the Model Performance tab
-    # Initialize tab_index in session state
+
     if 'tab_index' not in st.session_state:
         st.session_state.tab_index = 0
-    
-    # Check if Model Performance button was clicked
+
     if hasattr(st.session_state, 'auto_select_analysis') and st.session_state.auto_select_analysis:
-        st.session_state.tab_index = 2  # Set to Model Performance tab (index 2)
-        st.session_state.auto_select_analysis = False  # Reset the flag
-    
-    # Create tabs with the correct initial selection
+        st.session_state.tab_index = 2  
+        st.session_state.auto_select_analysis = False 
+
     tab_forecast, tab_history, tab_analysis = st.tabs(
         ["🪄 Next 10 Days Forecast", "🔙 Last 10 Days Comparison", "📈 Model Performance"]
     )
-    
-    # ----------------------------------
-    # TAB 1: NEXT 10 DAYS FORECAST (FIXED LAYOUT)
-    # ----------------------------------
+
     with tab_forecast:
         st.markdown("### Daily Temperature Forecast")
-        
-        # Create two columns: Left for day buttons, Right for details
+
         col_days, col_details = st.columns([2, 3])
-        
+
         with col_days:
             st.markdown("**Select a Day:**")
-            # Create 10 straight line buttons
+
             for i, row in forecast_summary_df.iterrows():
                 is_selected = st.session_state.selected_day == i
-                
-                # Custom button with better styling
+
                 if st.button(
                     f"🗓️ {row['day_name']}",
                     key=f"forecast_day_{i}",
                     use_container_width=True
                 ):
                     select_day(i)
-        
+
         with col_details:
-            # Detailed Prediction Card for selected day
+
             if st.session_state.selected_day < len(forecast_summary_df):
                 selected_row = forecast_summary_df.iloc[st.session_state.selected_day]
                 
                 st.markdown(f"### {selected_row['day_name']} ({selected_row['date'].strftime('%B %d, %Y')})")
                 st.markdown("<div class='selected-day-card'>", unsafe_allow_html=True)
-                
-                # Main temperature range
+
                 col_temp, col_range = st.columns(2)
                 with col_temp:
                     st.markdown("#### 🌡️ Temperature Range")
@@ -656,14 +608,14 @@ def forecast_page(current_weather, historical_data, model_data):
                 
                 with col_range:
                     st.markdown("#### ⏰ Hourly Predictions")
-                    # Create 4 rectangles for 4 times of day
+
                     times_cols = st.columns(4)
                     for idx, (time_str, temp) in enumerate(selected_row['prediction_times'].items()):
                         with times_cols[idx]:
                             st.markdown(f"<div class='forecast-detail-box'>", unsafe_allow_html=True)
                             st.markdown(f"**{time_str}**")
                             st.markdown(f"### {temp}°C")
-                            # Add appropriate icon based on time
+
                             if "00:00" in time_str:
                                 st.markdown("🌙 Night")
                             elif "06:00" in time_str:
@@ -673,10 +625,9 @@ def forecast_page(current_weather, historical_data, model_data):
                             elif "18:00" in time_str:
                                 st.markdown("🌇 Evening")
                             st.markdown("</div>", unsafe_allow_html=True)
-                
+
                 st.markdown("</div>", unsafe_allow_html=True)
-                
-                # Plot for selected day
+
                 plot_data = pd.DataFrame(list(selected_row['prediction_times'].items()), columns=['Time', 'Temperature'])
                 fig = px.line(plot_data, x='Time', y='Temperature', 
                               title=f"Predicted Hourly Temperature for {selected_row['day_name']}",
@@ -689,47 +640,41 @@ def forecast_page(current_weather, historical_data, model_data):
                                   yaxis_title="Temperature (°C)")
                 st.plotly_chart(fig, use_container_width=True)
 
-    # ----------------------------------
-    # TAB 2: LAST 10 DAYS COMPARISON (FIXED LAYOUT)
-    # ----------------------------------
     with tab_history:
         st.markdown("### Historical Prediction Accuracy")
-        
-        # Create two columns: Left for day buttons, Right for details
+
         col_days, col_details = st.columns([2, 3])
-        
+
         with col_days:
             st.markdown("**Select a Past Day:**")
-            # Create 10 straight line buttons for historical days
+
             for i, row in comparison_summary_df.iterrows():
                 is_selected = st.session_state.selected_day == i
-                
-                # Display date and error
+
                 if st.button(
                     f"🗓️ {row['day_name']} (Err: {row['avg_error']:.1f}°C)",
                     key=f"history_day_{i}",
                     use_container_width=True
                 ):
                     select_day(i)
-        
+
         with col_details:
-            # Detailed Comparison Card for selected day
+
             if st.session_state.selected_day < len(comparison_summary_df):
                 selected_row = comparison_summary_df.iloc[st.session_state.selected_day]
                 
                 st.markdown(f"### {selected_row['day_name']} ({selected_row['date'].strftime('%B %d, %Y')})")
                 st.markdown("<div class='selected-day-card'>", unsafe_allow_html=True)
-                
-                # Three columns for comparison
+
                 col_actual, col_predicted, col_performance = st.columns(3)
-                
+
                 with col_actual:
                     st.markdown("#### 🗹 Actual Measurements")
                     st.markdown("<div class='forecast-detail-box'>", unsafe_allow_html=True)
                     st.metric("Minimum Temp", f"{selected_row['actual_min']}°C", delta=None)
                     st.metric("Maximum Temp", f"{selected_row['actual_max']}°C", delta=None)
                     st.markdown("</div>", unsafe_allow_html=True)
-                
+
                 with col_predicted:
                     st.markdown("#### 👽 Model Predictions")
                     st.markdown("<div class='forecast-detail-box'>", unsafe_allow_html=True)
@@ -738,18 +683,16 @@ def forecast_page(current_weather, historical_data, model_data):
                     st.metric("Predicted Max", f"{selected_row['predicted_max']}°C", 
                              delta=f"{selected_row['predicted_max'] - selected_row['actual_max']:.1f}°C")
                     st.markdown("</div>", unsafe_allow_html=True)
-                
+
                 with col_performance:
                     st.markdown("#### 📈 Performance Metrics")
                     st.markdown("<div class='forecast-detail-box'>", unsafe_allow_html=True)
                     st.metric("Average Error", f"{selected_row['avg_error']:.2f}°C")
-                    
-                    # Calculate accuracy percentage
+
                     avg_actual = (selected_row['actual_min'] + selected_row['actual_max']) / 2
                     accuracy = max(0, 100 - (selected_row['avg_error'] / avg_actual * 100))
                     st.metric("Model Accuracy", f"{accuracy:.1f}%")
-                    
-                    # Error indicator
+
                     if selected_row['avg_error'] < 1.0:
                         st.success("⭕ Excellent Prediction")
                     elif selected_row['avg_error'] < 2.0:
@@ -760,25 +703,20 @@ def forecast_page(current_weather, historical_data, model_data):
                 
                 st.markdown("</div>", unsafe_allow_html=True)
 
-    # ----------------------------------
-    # TAB 3: MODEL PERFORMANCE (FIXED LAYOUT)
-    # ----------------------------------
     with tab_analysis:
         analysis_page_fixed(model_data)
 
 
 def analysis_page_fixed(model_data):
-    """Fixed version of analysis page without the .tail() error."""
+
     
     model, scaler, metrics, test_df, y_test, y_test_pred = model_data
 
     st.markdown("## 📊 Model Performance Analysis")
     st.markdown("### Final Test Set Performance (Last 20% of Historical Data)")
-    
-    # Create a container for the analysis
+
     st.markdown("<div class='analysis-container'>", unsafe_allow_html=True)
-    
-    # Key Metrics in a single row
+
     st.markdown("#### Key Performance Metrics")
     col1, col2, col3, col4 = st.columns(4)
     
@@ -796,8 +734,7 @@ def analysis_page_fixed(model_data):
                  help="5-Fold Cross-Validation Average MAE")
     
     st.markdown("</div>", unsafe_allow_html=True)
-    
-    # Model Details
+
     st.markdown("<div class='analysis-container'>", unsafe_allow_html=True)
     st.markdown("#### Model Architecture & Training")
     
@@ -823,30 +760,25 @@ def analysis_page_fixed(model_data):
         - **Additional:** Humidity, Pressure lags
         """)
     st.markdown("</div>", unsafe_allow_html=True)
-    
-    # Large single visualization
+
     st.markdown("<div class='analysis-container'>", unsafe_allow_html=True)
     st.markdown("#### Model Performance Visualization")
-    
-    # Create a comprehensive figure with subplots
+
     from plotly.subplots import make_subplots
-    
-    # Calculate errors - FIXED: This is a numpy array, not pandas
+
     errors = y_test - y_test_pred
-    
-    # Get last 200 points for time series - FIXED: Use array slicing for numpy arrays
+
     if len(errors) > 200:
-        errors_last_200 = errors[-200:]  # Array slicing for last 200 elements
+        errors_last_200 = errors[-200:]  
     else:
         errors_last_200 = errors
-    
-    # Get corresponding time values
+
     if 'time' in test_df.columns and len(test_df) > 200:
-        time_last_200 = test_df['time'].iloc[-200:]  # Use .iloc for pandas DataFrame
+        time_last_200 = test_df['time'].iloc[-200:] 
     elif 'time' in test_df.columns:
         time_last_200 = test_df['time']
     else:
-        # Create dummy time indices if 'time' column doesn't exist
+
         time_last_200 = list(range(len(errors_last_200)))
     
     fig = make_subplots(
@@ -858,8 +790,7 @@ def analysis_page_fixed(model_data):
         vertical_spacing=0.15,
         horizontal_spacing=0.15
     )
-    
-    # 1. Actual vs Predicted Scatter (show first 500 points for clarity)
+
     scatter_points = min(500, len(y_test))
     fig.add_trace(
         go.Scatter(
@@ -871,8 +802,7 @@ def analysis_page_fixed(model_data):
         ),
         row=1, col=1
     )
-    
-    # Add perfect prediction line
+
     min_val = min(y_test.min(), y_test_pred.min())
     max_val = max(y_test.max(), y_test_pred.max())
     fig.add_trace(
@@ -885,8 +815,7 @@ def analysis_page_fixed(model_data):
         ),
         row=1, col=1
     )
-    
-    # 2. Error Distribution
+
     fig.add_trace(
         go.Histogram(
             x=errors,
@@ -897,12 +826,10 @@ def analysis_page_fixed(model_data):
         ),
         row=1, col=2
     )
-    
-    # Add mean error line
+
     mean_error = errors.mean()
     fig.add_vline(x=mean_error, line_dash="dash", line_color="red", row=1, col=2)
-    
-    # 3. Residual Analysis (show first 500 points)
+
     residual_points = min(500, len(y_test_pred))
     fig.add_trace(
         go.Scatter(
@@ -915,8 +842,7 @@ def analysis_page_fixed(model_data):
         row=2, col=1
     )
     fig.add_hline(y=0, line_dash="dash", line_color="red", row=2, col=1)
-    
-    # 4. Error Over Time (last 200 points) - FIXED: No .tail() on numpy array
+
     fig.add_trace(
         go.Scatter(
             x=time_last_200,
@@ -929,8 +855,7 @@ def analysis_page_fixed(model_data):
         row=2, col=2
     )
     fig.add_hline(y=0, line_dash="dash", line_color="red", row=2, col=2)
-    
-    # Update layout
+
     fig.update_layout(
         height=800,
         showlegend=True,
@@ -938,8 +863,7 @@ def analysis_page_fixed(model_data):
         title_text="Comprehensive Model Performance Analysis",
         title_font=dict(size=20)
     )
-    
-    # Update axes labels
+
     fig.update_xaxes(title_text="Actual Temperature (°C)", row=1, col=1)
     fig.update_yaxes(title_text="Predicted Temperature (°C)", row=1, col=1)
     fig.update_xaxes(title_text="Error (°C)", row=1, col=2)
@@ -948,15 +872,13 @@ def analysis_page_fixed(model_data):
     fig.update_yaxes(title_text="Residual Error (°C)", row=2, col=1)
     fig.update_xaxes(title_text="Time", row=2, col=2)
     fig.update_yaxes(title_text="Error (°C)", row=2, col=2)
-    
+
     st.plotly_chart(fig, use_container_width=True)
     st.markdown("</div>", unsafe_allow_html=True)
-    
-    # Performance Summary
+
     st.markdown("<div class='analysis-container'>", unsafe_allow_html=True)
     st.markdown("#### Performance Summary & Interpretation")
-    
-    # Performance assessment
+
     if metrics['r2'] > 0.9:
         performance_level = "Excellent"
         color = "green"
@@ -987,20 +909,16 @@ def analysis_page_fixed(model_data):
     """, unsafe_allow_html=True)
     
     st.markdown("</div>", unsafe_allow_html=True)
-# ==========================================================================
-# MAIN APP EXECUTION
-# ==========================================================================
-# In the main() function, replace the navigation section with this:
+
 def main():
-    
-    # --- Common Elements (Header and Navigation) ---
+
     col_logo, col_nav, col_theme = st.columns([1, 4, 1])
 
     with col_logo:
         st.markdown("### 🌤️ ML WeatherCast")
     
     with col_nav:
-        # Simple solution - just use JavaScript to click the tab
+
         nav_cols = st.columns(3)
         with nav_cols[0]:
             if st.button("🔍 Home", use_container_width=True, key="nav_home"):
@@ -1009,7 +927,7 @@ def main():
             if st.button("📅 Tashkent Forecast", use_container_width=True, key="nav_forecast"):
                 set_page('forecast')
         with nav_cols[2]:
-            # Simple approach: Use JavaScript to click the Model Performance tab
+
             if st.button("📈 Model Performance", use_container_width=True, key="nav_performance"):
                 set_page('forecast')
                 # Use JavaScript to simulate clicking the third tab
@@ -1025,16 +943,13 @@ def main():
                 </script>
                 """
                 st.components.v1.html(js, height=0)
-        
+
     with col_theme:
         st.button(f"Theme: {'🔆 Light' if st.session_state.theme == 'dark' else '🌙 Dark'}", 
                  on_click=toggle_theme, use_container_width=True)
 
     st.markdown("---")
-    
-    # ... rest of your main() function remains unchanged ...
-    
-    # --- Load Data and Train Models ---
+
     with st.spinner("🔄 Loading data and training models..."):
         current_weather = get_current_weather()
         historical_data = read_historical_data(DATA_PATH)
@@ -1042,14 +957,12 @@ def main():
         if current_weather is None or historical_data is None:
             st.error("Failed to load data. Please ensure the 'tashkent_weather_23years.csv' file exists in the './data/' directory.")
             st.stop()
-        
-        # Train advanced model once
+
         model_data = train_model_with_time_series_cv(historical_data)
 
     if st.session_state.page == 'home':
         home_page()
     elif st.session_state.page == 'forecast':
         forecast_page(current_weather, historical_data, model_data)
-
 if __name__ == "__main__":
     main()
