@@ -1,0 +1,202 @@
+[
+  {
+    "name": "Tashkent",
+    "latitude": 41.26465,
+    "longitude": 69.21627,
+    "elevation": 424.0,
+    "timezone": "Asia/Tashkent",
+    "country": "Uzbekistan",
+    "admin1": "Tashkent",
+    "population": 1978028
+  },
+  {
+    "name": "Samarkand",
+    "latitude": 39.65417,
+    "longitude": 66.95972,
+    "elevation": 719.0,
+    "timezone": "Asia/Samarkand",
+    "country": "Uzbekistan",
+    "admin1": "Samarqand Region",
+    "population": 513572
+  },
+  {
+    "name": "Bukhara",
+    "latitude": 39.77472,
+    "longitude": 64.42861,
+    "elevation": 229.0,
+    "timezone": "Asia/Samarkand",
+    "country": "Uzbekistan",
+    "admin1": "Bukhara",
+    "population": 280187
+  },
+  {
+    "name": "Andijan",
+    "latitude": 40.78206,
+    "longitude": 72.34424,
+    "elevation": 494.0,
+    "timezone": "Asia/Tashkent",
+    "country": "Uzbekistan",
+    "admin1": "Andijan Region",
+    "population": 447800
+  },
+  {
+    "name": "Namangan",
+    "latitude": 40.9983,
+    "longitude": 71.67257,
+    "elevation": 442.0,
+    "timezone": "Asia/Tashkent",
+    "country": "Uzbekistan",
+    "admin1": "Namangan",
+    "population": 1010000
+  },
+  {
+    "name": "Fergana",
+    "latitude": 40.38421,
+    "longitude": 71.78432,
+    "elevation": 580.0,
+    "timezone": "Asia/Tashkent",
+    "country": "Uzbekistan",
+    "admin1": "Fergana",
+    "population": 299200
+  },
+  {
+    "name": "Nukus",
+    "latitude": 42.45306,
+    "longitude": 59.61028,
+    "elevation": 76.0,
+    "timezone": "Asia/Samarkand",
+    "country": "Uzbekistan",
+    "admin1": "Karakalpakstan",
+    "population": 332500
+  },
+  {
+    "name": "Qarshi",
+    "latitude": 38.86056,
+    "longitude": 65.78905,
+    "elevation": 374.0,
+    "timezone": "Asia/Samarkand",
+    "country": "Uzbekistan",
+    "admin1": "Qashqadaryo",
+    "population": 278300
+  },
+  {
+    "name": "Kokand",
+    "latitude": 40.52861,
+    "longitude": 70.9425,
+    "elevation": 416.0,
+    "timezone": "Asia/Tashkent",
+    "country": "Uzbekistan",
+    "admin1": "Fergana",
+    "population": 259700
+  },
+  {
+    "name": "Margilan",
+    "latitude": 40.47237,
+    "longitude": 71.72463,
+    "elevation": 494.0,
+    "timezone": "Asia/Tashkent",
+    "country": "Uzbekistan",
+    "admin1": "Fergana",
+    "population": 253500
+  },
+  {
+    "name": "Urgench",
+    "latitude": 41.55339,
+    "longitude": 60.62057,
+    "elevation": 101.0,
+    "timezone": "Asia/Samarkand",
+    "country": "Uzbekistan",
+    "admin1": "Xorazm Region",
+    "population": 145000
+  },
+  {
+    "name": "Jizzakh",
+    "latitude": 40.12341,
+    "longitude": 67.82842,
+    "elevation": 375.0,
+    "timezone": "Asia/Samarkand",
+    "country": "Uzbekistan",
+    "admin1": "Jizzakh Region",
+    "population": 179200
+  },
+  {
+    "name": "Termez",
+    "latitude": 37.22417,
+    "longitude": 67.27833,
+    "elevation": 304.0,
+    "timezone": "Asia/Samarkand",
+    "country": "Uzbekistan",
+    "admin1": "Surxondaryo Region",
+    "population": 182800
+  },
+  {
+    "name": "Navoiy",
+    "latitude": 40.08444,
+    "longitude": 65.37917,
+    "elevation": 392.0,
+    "timezone": "Asia/Samarkand",
+    "country": "Uzbekistan",
+    "admin1": "Navoiy Region",
+    "population": 144158
+  },
+  {
+    "name": "Angren",
+    "latitude": 41.01667,
+    "longitude": 70.14361,
+    "elevation": 932.0,
+    "timezone": "Asia/Tashkent",
+    "country": "Uzbekistan",
+    "admin1": "Tashkent Region",
+    "population": 191300
+  },
+  {
+    "name": "Chirchiq",
+    "latitude": 41.46889,
+    "longitude": 69.58222,
+    "elevation": 602.0,
+    "timezone": "Asia/Tashkent",
+    "country": "Uzbekistan",
+    "admin1": "Tashkent Region",
+    "population": 162800
+  },
+  {
+    "name": "Guliston",
+    "latitude": 37.84222,
+    "longitude": 67.04883,
+    "elevation": 613.0,
+    "timezone": "Asia/Samarkand",
+    "country": "Uzbekistan",
+    "admin1": null,
+    "population": 0
+  },
+  {
+    "name": "Bekobod",
+    "latitude": 40.63396,
+    "longitude": 71.18248,
+    "elevation": 388.0,
+    "timezone": "Asia/Tashkent",
+    "country": "Uzbekistan",
+    "admin1": "Fergana",
+    "population": 0
+  },
+  {
+    "name": "Denov",
+    "latitude": 38.26746,
+    "longitude": 67.89886,
+    "elevation": 525.0,
+    "timezone": "Asia/Samarkand",
+    "country": "Uzbekistan",
+    "admin1": "Surxondaryo Region",
+    "population": 78300
+  },
+  {
+    "name": "Shahrisabz",
+    "latitude": 39.05778,
+    "longitude": 66.83417,
+    "elevation": 631.0,
+    "timezone": "Asia/Samarkand",
+    "country": "Uzbekistan",
+    "admin1": "Qashqadaryo",
+    "population": 142700
+  }
+]
