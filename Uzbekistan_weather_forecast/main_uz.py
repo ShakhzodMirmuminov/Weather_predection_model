@@ -11,6 +11,10 @@ import plotly.graph_objects as go
 import plotly.express as px
 import pytz
 import os
+import os
+from dotenv import load_dotenv
+
+load_dotenv()
 
 st.set_page_config(
     page_title="Uzbekistan Weather Forecast ML",
@@ -196,10 +200,20 @@ else:
         }
     </style>
     """, unsafe_allow_html=True)
+# Replace this line in your code:
+# API_KEY = '0ea12166dca6efaa2a7077602c59e70d'
 
-API_KEY = '0ea12166dca6efaa2a7077602c59e70d'
+# With this:
+
+
+API_KEY = os.getenv('OPENWEATHER_API_KEY')
+
+if not API_KEY:
+    raise ValueError("OPENWEATHER_API_KEY not found in environment variables. Please check your .env file.")
+
 BASE_URL = 'https://api.openweathermap.org/data/2.5/'
-DATA_DIR = './data/uzbekistan_cities/' 
+DATA_DIR = './data/uzbekistan_cities/'
+
 
 UZBEKISTAN_CITIES = {
     "Tashkent": {"lat": 41.2995, "lon": 69.2401},

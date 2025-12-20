@@ -10,6 +10,10 @@ from sklearn.model_selection import TimeSeriesSplit
 import plotly.graph_objects as go
 import plotly.express as px
 import pytz
+import os
+from dotenv import load_dotenv
+
+load_dotenv()
 
 st.set_page_config(
     page_title="Tashkent Weather Forecast ML",
@@ -196,8 +200,13 @@ else:
 
 
 
-API_KEY = '0ea12166dca6efaa2a7077602c59e70d'
+API_KEY = os.getenv('OPENWEATHER_API_KEY')
+
+if not API_KEY:
+    raise ValueError("OPENWEATHER_API_KEY not found in environment variables. Please check your .env file.")
+
 BASE_URL = 'https://api.openweathermap.org/data/2.5/'
+DATA_DIR = './data/uzbekistan_cities/'
 TASHKENT_LAT = 41.2995
 TASHKENT_LON = 69.2401
 DATA_PATH = './data/tashkent_weather_23years.csv'
