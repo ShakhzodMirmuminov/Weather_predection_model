@@ -21,6 +21,10 @@ cd Uzbekistan_weather_forecast
 ```bash 
 pip install -r requirements.txt
 ```
+## Add your OpenWeatherMap API key to `.env`:
+```bash
+   OPENWEATHER_API_KEY=your_api_key_here
+```
 ## Collect data for all cities
 **Important: This will take 5-7 minutes as it fetches 23 years of data for 20 cities**
 ```bash

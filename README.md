@@ -34,6 +34,14 @@ cd Weather_prediction_model
 ```bash
 pip install -r requirements.txt
 ```
+## Create a `.env` file based on `.env.example`:
+```bash
+   cp .env.example .env
+```
+## Add your OpenWeatherMap API key to `.env`:
+```bash
+   OPENWEATHER_API_KEY=your_api_key_here
+```
 ## Collect historical data
 Run the data collection script to fetch and update weather data:
 ```bash

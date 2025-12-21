@@ -200,10 +200,7 @@ else:
         }
     </style>
     """, unsafe_allow_html=True)
-# Replace this line in your code:
-# API_KEY = '0ea12166dca6efaa2a7077602c59e70d'
 
-# With this:
 
 
 API_KEY = os.getenv('OPENWEATHER_API_KEY')
